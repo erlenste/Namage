@@ -16,15 +16,20 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import no.erlenste.namage.R
 import no.erlenste.namage.ui.theme.NamageTheme
 import no.erlenste.namage.ui.view.components.AppToolbar
+import no.erlenste.namage.ui.viewmodel.AgeViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,16 +51,24 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainScreen(modifier: Modifier = Modifier) {
+fun MainScreen(
+    modifier: Modifier = Modifier,
+    ageViewModel: AgeViewModel = viewModel()
+) {
+    val nameState = ageViewModel.names.collectAsState()
     Column(modifier = modifier) {
-        InputComponent()
-
-        //TODO: Show result when it is present in state
+        InputComponent(
+            onButtonClicked = { ageViewModel.getAge(it) }
+        )
+        nameState.value.forEach {
+            NamageCard(name = it)
+        }
     }
 }
 
 @Composable
-fun InputComponent(modifier: Modifier = Modifier) {
+fun InputComponent(modifier: Modifier = Modifier, onButtonClicked: (String) -> Unit) {
+    val name = rememberSaveable { mutableStateOf("") }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -63,17 +76,14 @@ fun InputComponent(modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-        // TODO: handle state for TextField
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = name.value,
+            onValueChange = { name.value = it },
             label = { Text("Skriv inn et navn") },
         )
-
-        //TODO: Send event to viewmodel with name when button is clicked
         Button(
             modifier = Modifier.padding(4.dp),
-            onClick = {}
+            onClick = { onButtonClicked(name.value) }
         ) {
             Text(text = "Sjekk alder", textAlign = TextAlign.Center)
         }
@@ -95,7 +105,9 @@ fun NamageCard(modifier: Modifier = Modifier, name: String) {
 @Composable
 fun InputComponentPreview() {
     NamageTheme {
-        InputComponent()
+        InputComponent(
+            onButtonClicked = {}
+        )
     }
 }
 
